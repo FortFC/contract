@@ -82,41 +82,29 @@ contract Issuable is Ownable
 //Contract for check time limits of ICO
 contract TimeLimit
 {
-    uint256 internal ICOStart;
-    uint256 internal ICOEnd;
-    uint256 internal TransferStart;
+    uint256 public constant ICOStart = 1521198000; //UnixTime gmt
+    uint256 public constant ICOEnd = 1521208800; //UnixTime gmt
+    uint256 public constant TransferStart = 1521212400; //UnixTime gmt
     
     bool internal ICOEnable;
     bool internal TransferEnable;
     
-    event ICOStarted(uint256 blockNumber);
-    event ICOEnded(uint256 blockNumber);
-    event TrasferEnabled(uint256 blockNumber);
+    event ICOStarted();
+    event ICOEnded();
+    event TrasferEnabled();
     
-    function TimeLimit(uint256 start, uint256 end, uint256 trans) public //Local unix time
-    {
-        require(start >= now);
-        require(end > now);
-        require(trans > now);
-        require(start < end);
-        require(trans >= end);
-        ICOStart = start;
-        ICOEnd = end;
-        TransferStart = trans;
-    }
-    
-    modifier onlyInIco()
+    modifier onlyInIssueTime()
     {
         require(now > ICOStart);
         require(now <= TransferStart); //We need time to issue last transactions in other money
         if (!ICOEnable && now <= ICOEnd)
         {
-            ICOStarted(block.number);
+            ICOStarted();
             ICOEnable = true;
         }
         if (ICOEnable && now > ICOEnd)
         {
-            ICOEnded(block.number);
+            ICOEnded();
             ICOEnable = false;
         }
         _;
@@ -127,7 +115,7 @@ contract TimeLimit
         require(now > TransferStart);
         if (!TransferEnable)
         {
-            TrasferEnabled(block.number);
+            TrasferEnabled();
             TransferEnable = true;
         }
         _;
@@ -146,32 +134,9 @@ contract TimeLimit
     function closeICO() internal;
 }
 
-//Debug contract
-contract TimeLimitImp is TimeLimit //TODO! Delete in release
-{
-    uint256 internal counter;
-    function TimeLimitImp(
-        uint256 _ICOstart, uint256 _ICOend, uint256 _transferStart
-        ) public TimeLimit(_ICOstart, _ICOend, _transferStart)
-    {
-    }
-    
-    function closeICO() internal
-    {
-        counter++;
-    }
-}
-
-
 //Main contract
 contract OurContract is ERC20, Issuable, TimeLimit
 {
-    //Contract constants
-    uint256 public constant ICO_START_CONTS = 1521198000; //UnixTime  local 16.03 14:00
-    uint256 public constant ICO_END_CONTS = 1521208800; //UnixTime local 16.03 17:00
-    uint256 public constant TRANSFER_START_CONTS = 1521212400; //UnixTime local 16.03 18:00
-    uint256 internal constant TOTAL_SUPPLY_TOKENS_CONTS = 1000000000000000000000000000; //With 18 zeros at end //1 000 000 000 000000000000000000;
-    
     event cause(address to, uint256 val, uint8 _type, string message);
     
     //Public token user functions
@@ -222,7 +187,7 @@ contract OurContract is ERC20, Issuable, TimeLimit
     //Public issuers function
     function issue(
         address to, uint256 value, uint8 _type, string message
-        ) onlyIssuer onlyInIco closeCheckICO public
+        ) onlyIssuer onlyInIssueTime closeCheckICO public
     {
         _transfer(owner, to, value);
         cause(to, value, _type, message);
@@ -230,22 +195,12 @@ contract OurContract is ERC20, Issuable, TimeLimit
     
     //Public owner functions
     //Constructor
-//    function OurContract(
-//        uint256 _totalSupply, uint256 _ICOstart, uint256 _ICOend,
-//        uint256 _transferStart, string _name, string _symbol
-//        ) public TimeLimit(_ICOstart, _ICOend, _transferStart)
-//        ERC20(_name, _symbol)
-//    {
-//        totalSupply_ = _totalSupply;
-//        balances[msg.sender] = totalSupply_;
-//        issueEnable = true;
-//    }
     function OurContract(
         string _name, string _symbol
-        ) public TimeLimit(ICO_START_CONTS, ICO_END_CONTS, TRANSFER_START_CONTS)
+        ) public 
         ERC20(_name, _symbol)
     {
-        totalSupply_ = TOTAL_SUPPLY_TOKENS_CONTS;
+        totalSupply_ = 1000000000000000000000000000; //With 18 zeros at end //1 000 000 000 000000000000000000;
         balances[msg.sender] = totalSupply_;
         issueEnable = true;
     }
