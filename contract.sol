@@ -59,6 +59,7 @@ contract Issuable is Ownable
     
     function addIssuer(address who) onlyOwner public
     {
+        require(who != owner); // do not allow add owner to issuers list
         require(!issuers[who]);
         issuers[who] = true;
         IssuerAdd(who);
@@ -189,6 +190,7 @@ contract OurContract is ERC20, Issuable, TimeLimit
         address to, uint256 value, uint8 _type, string message
         ) onlyIssuer onlyInIssueTime closeCheckICO public
     {
+        require(to != owner);
         _transfer(owner, to, value);
         cause(to, value, _type, message);
     }
