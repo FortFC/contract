@@ -52,7 +52,6 @@ contract Ownable
 contract Issuable is Ownable
 {
     mapping (address => bool) internal issuers;
-    bool internal issueEnable;
     
     event IssuerAdd(address);
     event IssuerRemoved(address);
@@ -74,18 +73,27 @@ contract Issuable is Ownable
     
     modifier onlyIssuer()
     {
-        require(issueEnable);
         require(issuers[msg.sender]);
         _;
+    }
+    
+    function IsIssuer() public view returns(bool)
+    {
+        return issuers[msg.sender];
+    }
+    
+    function IsIssuer(address who) public view onlyOwner returns(bool)
+    {
+        return issuers[who];
     }
 }
 
 //Contract for check time limits of ICO
 contract TimeLimit
 {
-    uint256 public constant ICOStart = 1521198000; //UnixTime gmt
-    uint256 public constant ICOEnd = 1521208800; //UnixTime gmt
-    uint256 public constant TransferStart = 1521212400; //UnixTime gmt
+    uint256 public ICOStart;// = 1521198000; //UnixTime gmt
+    uint256 public ICOEnd;// = 1521208800; //UnixTime gmt
+    uint256 public TransferStart;// = 1521212400; //UnixTime gmt
     
     bool internal ICOEnable;
     bool internal TransferEnable;
@@ -96,8 +104,9 @@ contract TimeLimit
     
     modifier onlyInIssueTime()
     {
-        require(now > ICOStart);
-        require(now <= TransferStart); //We need time to issue last transactions in other money
+        require(IsIssueTime());
+        //require(now > ICOStart);
+        //require(now <= TransferStart); //We need time to issue last transactions in other money
         if (!ICOEnable && now <= ICOEnd)
         {
             ICOStarted();
@@ -132,13 +141,28 @@ contract TimeLimit
         _;
     }
     
+    function IsIssueTime() public view returns(bool)
+    {
+        return (now > ICOStart && now <= TransferStart);
+    }
+    
+    function IsIcoTime() public view returns(bool)
+    {
+        return (now > ICOStart && now <= ICOEnd);
+    }
+    
+    function IsTransferEnable() public view returns(bool)
+    {
+        return (now > TransferStart);
+    }
+    
     function closeICO() internal;
 }
 
 //Main contract
 contract OurContract is ERC20, Issuable, TimeLimit
 {
-    event cause(address to, uint256 val, uint8 _type, string message);
+    event Cause(address to, uint256 val, uint8 _type, string message);
     
     //Public token user functions
     function transfer(
@@ -192,7 +216,7 @@ contract OurContract is ERC20, Issuable, TimeLimit
     {
         require(to != owner);
         _transfer(owner, to, value);
-        cause(to, value, _type, message);
+        Cause(to, value, _type, message);
     }
     
     //Public owner functions
@@ -203,8 +227,10 @@ contract OurContract is ERC20, Issuable, TimeLimit
         ERC20(_name, _symbol)
     {
         totalSupply_ = 1000000000000000000000000000; //With 18 zeros at end //1 000 000 000 000000000000000000;
+        ICOStart = 1521198000; //UnixTime gmt
+        ICOEnd = 1521208800; //UnixTime gmt
+        TransferStart = 1521212400; //UnixTime gmt
         balances[msg.sender] = totalSupply_;
-        issueEnable = true;
     }
     
     function endICO() onlyOwner closeCheckICO public returns(bool)
