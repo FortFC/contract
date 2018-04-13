@@ -53,8 +53,8 @@ contract Issuable is Ownable
 {
     mapping (address => bool) internal issuers;
     
-    event IssuerAdd(address);
-    event IssuerRemoved(address);
+    event IssuerAdd(address who);
+    event IssuerRemoved(address who);
     
     function addIssuer(address who) onlyOwner public
     {
@@ -75,11 +75,6 @@ contract Issuable is Ownable
     {
         require(issuers[msg.sender]);
         _;
-    }
-    
-    function IsIssuer() public view returns(bool)
-    {
-        return issuers[msg.sender];
     }
     
     function IsIssuer(address who) public view onlyOwner returns(bool)
