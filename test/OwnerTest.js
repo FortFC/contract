@@ -1,5 +1,38 @@
 var OurContract = artifacts.require("OurContract");
 
+function equal_event_args(one, second)
+{
+    if (one.length != second.length) return false;
+    for (var key in one)
+    {
+        if (!second.hasOwnProperty(key)) return false;
+        if (second[key] != one[key]) return false;
+    }
+    return true;
+};
+
+function has_event(logs, name, args)
+{
+    var finded = false;
+    for (var i = 0; i < logs.logs.length; i++)
+    {
+        var name_ = logs.logs[i].event;
+        var args_ = logs.logs[i].args;
+        if (name == name_ && equal_event_args(args, args_)) return true;
+    }
+    return false;
+};
+
+assert.event = function(logs, name, args, text)
+{
+    if (!has_event(logs, name, args)) assert.fail(text);
+};
+
+assert.nevent = function(logs, name, args, text)
+{
+    if (has_event(logs, name, args)) assert.fail(text);
+};
+
 contract('OurContract', function(accounts)
 {
     var owner = accounts[0];
@@ -73,14 +106,7 @@ contract('OurContract', function(accounts)
             return instance.addIssuer(issuer);
         }).then(function(r)
         {
-            var finded = false;
-            for (var i = 0; i < r.logs.length; i++)
-            {
-                var name = r.logs[i].event;
-                var arg = r.logs[i].args.who;
-                if (name == "IssuerAdd" && arg == issuer) finded = true;
-            }
-            if (!finded) assert.fail("Event not added");
+            assert.event(r, "IssuerAdd", { "who" : issuer }, "Event not added");
             return instance.IsIssuer.call(issuer);
         }).then(function(r)
         {
@@ -124,14 +150,7 @@ contract('OurContract', function(accounts)
             return instance.removeIssuer(issuer);
         }).then(function(r)
         {
-            var finded = false;
-            for (var i = 0; i < r.logs.length; i++)
-            {
-                var name = r.logs[i].event;
-                var arg = r.logs[i].args.who;
-                if (name == "IssuerRemoved" && arg == issuer) finded = true;
-            }
-            if (!finded) assert.fail("Event not added");
+            assert.event(r, "IssuerRemoved", { "who" : issuer }, "Event not added");
             return instance.IsIssuer.call(issuer);
         }).then(function(r)
         {

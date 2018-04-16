@@ -192,16 +192,16 @@ contract OurContract is ERC20, Issuable, TimeLimit
         return totalSupply_;
     }
     
-    function balanceOf(address owner) public view returns (uint256 balance) 
+    function balanceOf(address owner_) public view returns (uint256 balance) 
     {
-        return balances[owner];
+        return balances[owner_];
     }
     
     function allowance(
-        address owner, address spender
+        address owner_, address spender
         ) public view returns (uint256) 
     {
-        return allowances[owner][spender];
+        return allowances[owner_][spender];
     }
     
     //Public issuers function
