@@ -61,14 +61,14 @@ contract Issuable is Ownable
         require(who != owner); // do not allow add owner to issuers list
         require(!issuers[who]);
         issuers[who] = true;
-        IssuerAdd(who);
+        emit IssuerAdd(who);
     }
     
     function removeIssuer(address who) onlyOwner public
     {
         require(issuers[who]);
         issuers[who] = false;
-        IssuerRemoved(who);
+        emit IssuerRemoved(who);
     }
     
     modifier onlyIssuer()
@@ -104,12 +104,12 @@ contract TimeLimit
         //require(now <= TransferStart); //We need time to issue last transactions in other money
         if (!ICOEnable && now <= ICOEnd)
         {
-            ICOStarted();
+            emit ICOStarted();
             ICOEnable = true;
         }
         if (ICOEnable && now > ICOEnd)
         {
-            ICOEnded();
+            emit ICOEnded();
             ICOEnable = false;
         }
         _;
@@ -120,7 +120,7 @@ contract TimeLimit
         require(now > TransferStart);
         if (!TransferEnable)
         {
-            TrasferEnabled();
+            emit TrasferEnabled();
             TransferEnable = true;
         }
         _;
@@ -182,7 +182,7 @@ contract OurContract is ERC20, Issuable, TimeLimit
         ) public onlyNotOwner returns (bool)
     {
         allowances[msg.sender][spender] = value;
-        Approval(msg.sender, spender, value);
+        emit Approval(msg.sender, spender, value);
         return true;
     }
     
@@ -210,8 +210,9 @@ contract OurContract is ERC20, Issuable, TimeLimit
         ) onlyIssuer onlyInIssueTime closeCheckICO public
     {
         require(to != owner);
+        require(!issuers[to]);
         _transfer(owner, to, value);
-        Cause(to, value, _type, message);
+        emit Cause(to, value, _type, message);
     }
     
     //Public owner functions
@@ -223,8 +224,8 @@ contract OurContract is ERC20, Issuable, TimeLimit
     {
         totalSupply_ = 1000000000000000000000000000; //With 18 zeros at end //1 000 000 000 000000000000000000;
         ICOStart = 1521198000; //UnixTime gmt
-        ICOEnd = 1521208800; //UnixTime gmt
-        TransferStart = 1521212400; //UnixTime gmt
+        ICOEnd = 1721208800; //UnixTime gmt
+        TransferStart = 1721212400; //UnixTime gmt
         balances[msg.sender] = totalSupply_;
     }
     
@@ -252,7 +253,7 @@ contract OurContract is ERC20, Issuable, TimeLimit
 
         balances[from] = balances[from] - value;
         balances[to] = balances[to] + value;
-        Transfer(from, to, value);
+        emit Transfer(from, to, value);
         return true;
     }
     
@@ -262,5 +263,24 @@ contract OurContract is ERC20, Issuable, TimeLimit
         balances[owner] = 0;
         owner = 0;
     }
+}
+
+contract OurContractForTest is OurContract
+{
+    function OurContractForTest(
+        string _name, string _symbol
+        ) public 
+        OurContract(_name, _symbol)
+    {
+    }
     
+    function SetICOTime(
+        uint256 ICOStart_,
+        uint256 ICOEnd_,
+        uint256 TrasferStart_) public
+    {
+        ICOStart = ICOStart_; //UnixTime gmt
+        ICOEnd = ICOEnd_; //UnixTime gmt
+        TransferStart = TrasferStart_; //UnixTime gmt
+    }
 }
