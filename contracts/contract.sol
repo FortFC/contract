@@ -7,7 +7,7 @@ contract ERC20
     string public symbol;
     uint8 public constant decimals = 18;
     
-    function ERC20(string _name, string _symbol) public 
+    constructor(string _name, string _symbol) public 
     {
         name = _name;
         symbol = _symbol;
@@ -30,7 +30,7 @@ contract Ownable
 {
     address internal owner;
         
-    function Ownable() public 
+    constructor() public 
     {
         owner = msg.sender;
     }
@@ -217,7 +217,7 @@ contract OurContract is ERC20, Issuable, TimeLimit
     
     //Public owner functions
     //Constructor
-    function OurContract(
+    constructor(
         string _name, string _symbol
         ) public 
         ERC20(_name, _symbol)
@@ -267,7 +267,7 @@ contract OurContract is ERC20, Issuable, TimeLimit
 
 contract OurContractForTest is OurContract
 {
-    function OurContractForTest(
+    constructor(
         string _name, string _symbol
         ) public 
         OurContract(_name, _symbol)
